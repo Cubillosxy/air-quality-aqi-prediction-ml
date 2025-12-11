@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from ..config import RAW_DATA_PATH, PROCESSED_DATA_PATH, TRAIN_FRACTION
+from src.config import RAW_DATA_PATH, PROCESSED_DATA_PATH, TRAIN_FRACTION
 
 
 def load_raw_data() -> pd.DataFrame:
