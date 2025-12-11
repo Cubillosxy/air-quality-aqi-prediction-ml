@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 import pandas as pd
 
-from ..config import BASE_DIR
+from src.config import BASE_DIR
 
 RESULTS_DIR = BASE_DIR / "results"
 RESULTS_FILE = RESULTS_DIR / "best_model_results.json"

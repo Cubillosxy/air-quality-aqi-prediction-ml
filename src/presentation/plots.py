@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ..config import PLOTS_DIR
-from ..domain.entities import ModelRunResult
+from src.config import PLOTS_DIR
+from src.domain.entities import ModelRunResult
 
 
 def _ensure_plots_dir() -> None:

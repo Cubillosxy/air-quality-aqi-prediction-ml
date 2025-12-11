@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 import requests
 
-from ..config import (
+from src.config import (
     LATITUDE,
     LONGITUDE,
     PAST_DAYS,
