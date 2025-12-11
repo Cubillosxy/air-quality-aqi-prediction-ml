@@ -4,6 +4,32 @@ import pandas as pd
 from ..infrastructure.storage import load_raw_data, save_processed_data
 
 
+
+
+def bucket_weather(row: pd.Series) -> str:
+    """
+    Bucket raw weather variables into coarse weather categories.
+    This replaces the need for an external 'weathercode' column.
+    """
+    temp = row["temperature_2m"]
+    humidity = row["relative_humidity_2m"]
+    wind = row["wind_speed_10m"]
+
+    if humidity >= 85 and temp < 20:
+        return "foggy_or_misty"
+
+    if wind >= 7:
+        return "windy"
+
+    if temp >= 28 and humidity <= 40:
+        return "hot_dry"
+
+    if temp <= 10:
+        return "cold"
+
+    return "mild"
+
+
 def build_features() -> pd.DataFrame:
     """
     Build time-based, rolling and weather features and define target AQI 24h ahead.
@@ -27,6 +53,12 @@ def build_features() -> pd.DataFrame:
     df["temp_change_3h"] = df["temperature_2m"].diff(3)
     df["humidity_roll_6h"] = df["relative_humidity_2m"].rolling(window=6).mean()
     df["wind_roll_6h"] = df["wind_speed_10m"].rolling(window=6).mean()
+
+    # Weathercode to categorical
+    df["weather_category"] = df.apply(bucket_weather, axis=1)
+    weather_dummies = pd.get_dummies(df["weather_category"], prefix="weather", drop_first=True)
+    df = pd.concat([df, weather_dummies], axis=1)
+    df = df.drop(columns=["weather_category"])
 
     # Target: AQI 24h ahead
     df["target_aqi_24h"] = df["us_aqi"].shift(-24)

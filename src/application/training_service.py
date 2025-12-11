@@ -8,8 +8,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from ..config import RANDOM_SEED
 from ..domain.entities import ModelRunResult
 from ..infrastructure.storage import load_processed_data, time_split
-from ..presentation.plots import plot_predictions, plot_feature_importance
-
+from ..infrastructure.results import save_results
+from ..presentation.plots import plot_predictions, plot_feature_importance, plot_aqi_by_weather
 
 class RandomForestTrainer:
     """
@@ -85,7 +85,7 @@ def run_training_and_evaluation() -> ModelRunResult:
         y_pred = trainer.predict(X_test)
 
         mae = mean_absolute_error(y_test, y_pred)
-        rmse = mean_squared_error(y_test, y_pred, squared=False)
+        rmse = mean_squared_error(y_test, y_pred)
 
         importances = trainer.feature_importances(feature_names)
         result = ModelRunResult(
@@ -104,7 +104,18 @@ def run_training_and_evaluation() -> ModelRunResult:
     best = min(results, key=lambda r: r.rmse)
     print(f"Best model: {best.name}")
 
+    save_results(
+        model_name=best.name,
+        mae=best.mae,
+        rmse=best.rmse,
+        feature_importances=best.feature_importances,
+        timestamps=ts_test,
+        y_true=best.y_true,
+        y_pred=best.y_pred,
+    )
+
     plot_predictions(ts_test, best.y_true, best.y_pred, best.name)
     plot_feature_importance(best)
+    plot_aqi_by_weather(df)
 
     return best

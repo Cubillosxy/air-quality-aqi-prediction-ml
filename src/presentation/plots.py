@@ -74,3 +74,68 @@ def plot_feature_importance(result: ModelRunResult, top_n: int = 15) -> None:
     plt.savefig(out_path, dpi=150)
     plt.close()
     print(f"Saved feature importance plot to {out_path}")
+
+def _bucket_weather_for_plot(row: pd.Series) -> str:
+    """
+    Rebuild a coarse weather category for plotting purposes.
+    Uses temperature, humidity and wind to approximate conditions.
+    """
+    temp = row["temperature_2m"]
+    humidity = row["relative_humidity_2m"]
+    wind = row["wind_speed_10m"]
+
+    if humidity >= 85 and temp < 20:
+        return "foggy_or_misty"
+
+    if wind >= 7:
+        return "windy"
+
+    if temp >= 28 and humidity <= 40:
+        return "hot_dry"
+
+    if temp <= 10:
+        return "cold"
+
+    return "mild"
+
+def plot_aqi_by_weather(df: pd.DataFrame) -> None:
+    """
+    Plot average AQI per weather category using processed features.
+    """
+    _ensure_plots_dir()
+
+    df = df.copy()
+
+    # Si no existe la columna, la reconstruimos para el plot
+    if "weather_category" not in df.columns:
+        required_cols = {"temperature_2m", "relative_humidity_2m", "wind_speed_10m"}
+        if not required_cols.issubset(df.columns):
+            print(
+                "Cannot compute 'weather_category' for plot. "
+                "Missing temperature_2m / relative_humidity_2m / wind_speed_10m."
+            )
+            return
+
+        df["weather_category"] = df.apply(_bucket_weather_for_plot, axis=1)
+
+    if "us_aqi" not in df.columns:
+        print("No 'us_aqi' column found. Skipping AQI by weather plot.")
+        return
+
+    mean_by_weather = (
+        df.groupby("weather_category")["us_aqi"]
+        .mean()
+        .sort_values()
+    )
+
+    plt.figure(figsize=(8, 5))
+    mean_by_weather.plot(kind="bar")
+    plt.title("Average AQI by Weather Category")
+    plt.xlabel("Weather Category")
+    plt.ylabel("Average AQI")
+    plt.tight_layout()
+
+    out_path = PLOTS_DIR / "aqi_by_weather_category.png"
+    plt.savefig(out_path, dpi=150)
+    plt.close()
+    print(f"Saved AQI by weather category plot to {out_path}")
